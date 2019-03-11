@@ -1,0 +1,16 @@
+{
+  "extends": ["semistandard-react", "prettier"],
+  "plugins": ["prettier"],
+  "env": {
+    "jest": true
+  },
+  "rules": {
+    "no-use-before-define": "off",
+    "semistandard-react/prop-types": "off",
+    "comma-dangle": "off"
+  },
+  "globals": {
+    "fetch": false,
+    "__DEV__": false
+  }
+}
