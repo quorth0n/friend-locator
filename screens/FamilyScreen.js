@@ -27,15 +27,14 @@ class FamilyScreen extends React.Component {
   getFamilies = async () => {
     const families = JSON.parse(await AsyncStorage.getItem('families'));
 
-    if (families) {
-      const familyVals = [];
-      families.forEach(family =>
-        this.props.firebase.family(family).on('value', snap => {
-          familyVals.push(snap.val());
-        })
-      );
-      console.log(familyVals);
-      return familyVals;
+    if (Array.isArray(families) && !!families.length) {
+      const getDataForFamily = async family => {
+        const snapshot = await this.props.firebase.family(family).once('value');
+        return snapshot.val();
+      };
+      const familyPromises = families.map(getDataForFamily);
+      const completed = await Promise.all(familyPromises);
+      return completed;
     } else {
       return [];
     }
@@ -43,14 +42,17 @@ class FamilyScreen extends React.Component {
 
   handleAddNewFamily = async () => {
     const newFamilyRef = this.props.firebase.families().push();
-    newFamilyRef.set({
+    await newFamilyRef.set({
       name: this.state.newFamilyName
     });
-    await AsyncStorage.mergeItem(
-      'families',
-      JSON.stringify([newFamilyRef.key])
-    );
-    console.log(`${await AsyncStorage.getItem('families')}`);
+    // mergeItem fails here due to type mismatch (wants JSONArray but we can only give JSONObject)
+    const oldFamilies = JSON.parse(await AsyncStorage.getItem('families'));
+    oldFamilies.push(newFamilyRef.key);
+    await AsyncStorage.setItem('families', JSON.stringify(oldFamilies));
+    this.setState({
+      addNewFamily: false,
+      families: await this.getFamilies()
+    });
   };
 
   async componentDidMount() {
@@ -71,6 +73,7 @@ class FamilyScreen extends React.Component {
               <Touchable
                 style={styles.option}
                 background={Touchable.Ripple('#ccc', false)}
+                key={family.name}
               >
                 <View style={{ flexDirection: 'row' }}>
                   <View style={styles.optionIconContainer}>

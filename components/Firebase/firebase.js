@@ -19,7 +19,7 @@ class Firebase {
 
   // Families
   families = () => this.db.ref('families');
-  family = uid => this.db.ref(`family/${uid}`);
+  family = uid => this.db.ref(`families/${uid}`);
 }
 
 export default Firebase;
